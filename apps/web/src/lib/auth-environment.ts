@@ -4,12 +4,31 @@ import { z } from "zod";
 
 config({ path: resolve(process.cwd(), "../../.env"), quiet: true });
 
+export const documentedAuthSecretPlaceholder =
+  "replace-with-a-cryptographically-random-secret-at-least-32-characters";
+
+const emailAddressSchema = z.string().email();
+
+function isValidMailbox(value: string): boolean {
+  const trimmed = value.trim();
+  if (emailAddressSchema.safeParse(trimmed).success) return true;
+  if (/[\r\n]/.test(trimmed)) return false;
+  const displayMailbox = /^(.+?)\s*<([^<>]+)>$/.exec(trimmed);
+  return Boolean(
+    displayMailbox?.[1]?.trim() &&
+    emailAddressSchema.safeParse(displayMailbox[2]?.trim()).success,
+  );
+}
+
 const smtpSchema = z.object({
   SMTP_HOST: z.string().min(1),
   SMTP_PORT: z.coerce.number().int().positive().default(587),
   SMTP_USER: z.string().min(1),
   SMTP_PASSWORD: z.string().min(1),
-  SMTP_FROM: z.string().email(),
+  SMTP_FROM: z.string().refine(isValidMailbox, {
+    message:
+      "SMTP_FROM must be an email address or a display name with an email address.",
+  }),
 });
 
 const authEnvironmentSchema = z
@@ -29,6 +48,18 @@ const authEnvironmentSchema = z
     SMTP_FROM: z.string().optional(),
   })
   .superRefine((value, context) => {
+    if (
+      value.NODE_ENV === "production" &&
+      value.BETTER_AUTH_SECRET === documentedAuthSecretPlaceholder
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["BETTER_AUTH_SECRET"],
+        message:
+          "Production cannot use the documented BETTER_AUTH_SECRET placeholder.",
+      });
+    }
+
     if (
       value.NODE_ENV === "production" &&
       value.EMAIL_DELIVERY_MODE !== "smtp"

@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseAuthEnvironment } from "./auth-environment";
+import {
+  documentedAuthSecretPlaceholder,
+  parseAuthEnvironment,
+} from "./auth-environment";
 
 const valid = {
   BETTER_AUTH_SECRET: "a-secure-test-secret-containing-more-than-32-characters",
@@ -25,5 +28,40 @@ describe("authentication environment", () => {
     expect(() =>
       parseAuthEnvironment({ ...valid, NODE_ENV: "production" }),
     ).toThrow("Production requires EMAIL_DELIVERY_MODE=smtp");
+  });
+
+  it.each(["no-reply@example.com", "PBcoms <no-reply@example.com>"])(
+    "accepts the SMTP sender format %s",
+    (smtpFrom) => {
+      expect(() =>
+        parseAuthEnvironment({
+          ...valid,
+          EMAIL_DELIVERY_MODE: "smtp",
+          SMTP_HOST: "smtp.example.com",
+          SMTP_PORT: "587",
+          SMTP_USER: "user",
+          SMTP_PASSWORD: "password",
+          SMTP_FROM: smtpFrom,
+        }),
+      ).not.toThrow();
+    },
+  );
+
+  it("rejects the documented authentication secret placeholder in production", () => {
+    expect(() =>
+      parseAuthEnvironment({
+        ...valid,
+        NODE_ENV: "production",
+        BETTER_AUTH_SECRET: documentedAuthSecretPlaceholder,
+        EMAIL_DELIVERY_MODE: "smtp",
+        SMTP_HOST: "smtp.example.com",
+        SMTP_PORT: "587",
+        SMTP_USER: "user",
+        SMTP_PASSWORD: "password",
+        SMTP_FROM: "PBcoms <no-reply@example.com>",
+      }),
+    ).toThrow(
+      "Production cannot use the documented BETTER_AUTH_SECRET placeholder",
+    );
   });
 });
