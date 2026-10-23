@@ -1,9 +1,10 @@
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres, { type Sql } from "postgres";
 import { parseDatabaseEnvironment } from "./environment";
+import * as schema from "./schema";
 
 export interface DatabaseClient {
-  readonly db: PostgresJsDatabase;
+  readonly db: PostgresJsDatabase<typeof schema>;
   readonly sql: Sql;
   close(): Promise<void>;
 }
@@ -25,5 +26,5 @@ export function createDatabaseClient(
     idle_timeout: options.idleTimeoutSeconds ?? 20,
   });
 
-  return { db: drizzle(sql), sql, close: async () => sql.end() };
+  return { db: drizzle(sql, { schema }), sql, close: async () => sql.end() };
 }

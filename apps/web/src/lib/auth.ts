@@ -1,20 +1,10 @@
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
-import { createDatabaseClient, schema } from "@pbcoms/database";
+import { schema } from "@pbcoms/database";
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { authEnvironment } from "./auth-environment";
 import { createEmailDelivery } from "./email";
-
-const globalDatabase = globalThis as typeof globalThis & {
-  pbcomsDatabase?: ReturnType<typeof createDatabaseClient>;
-};
-
-const databaseClient =
-  globalDatabase.pbcomsDatabase ??
-  createDatabaseClient(process.env, { maxConnections: 10 });
-
-if (process.env.NODE_ENV !== "production")
-  globalDatabase.pbcomsDatabase = databaseClient;
+import { databaseClient } from "./database";
 
 const emailDelivery = createEmailDelivery(authEnvironment);
 

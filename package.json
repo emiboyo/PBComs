@@ -18,7 +18,7 @@
     "db:studio": "pnpm --filter @pbcoms/database db:studio",
     "db:check": "pnpm --filter @pbcoms/database db:check",
     "db:migrations:check": "pnpm --filter @pbcoms/database db:migrations:check",
-    "test:integration": "pnpm --filter @pbcoms/database test:integration"
+    "test:integration": "pnpm --filter @pbcoms/database test:integration && pnpm --filter @pbcoms/web test:integration"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.7",
