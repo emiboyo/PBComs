@@ -1,13 +1,11 @@
 import { config } from "dotenv";
 import { resolve } from "node:path";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { assertDedicatedTestDatabase } from "@pbcoms/database";
 
 config({ path: resolve(process.cwd(), "../../.env"), quiet: true });
-if (!process.env.DATABASE_TEST_URL)
-  throw new Error(
-    "DATABASE_TEST_URL is required for organisation integration tests.",
-  );
-process.env.DATABASE_URL = process.env.DATABASE_TEST_URL;
+const testDatabaseUrl = assertDedicatedTestDatabase(process.env);
+process.env.DATABASE_URL = testDatabaseUrl;
 
 const owner = { id: "pb004-owner", emailVerified: true };
 const other = { id: "pb004-other", emailVerified: true };
@@ -25,6 +23,7 @@ describe("organisation integration", () => {
   });
 
   beforeEach(async () => {
+    assertDedicatedTestDatabase(process.env);
     await database.databaseClient
       .sql`truncate table organisation_membership, organisation, "user" cascade`;
     await database.databaseClient.db.insert(schema.user).values([

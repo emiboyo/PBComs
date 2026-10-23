@@ -6,12 +6,10 @@ import {
 } from "@/lib/organisation-service";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { hasTrustedRequestOrigin } from "@/lib/request-origin";
 
 export async function POST(request: Request) {
-  if (
-    request.headers.get("origin") !==
-    new URL(authEnvironment.BETTER_AUTH_URL).origin
-  ) {
+  if (!hasTrustedRequestOrigin(request, authEnvironment.BETTER_AUTH_URL)) {
     return NextResponse.json(
       { ok: false, code: "invalid_origin" },
       { status: 403 },

@@ -4,16 +4,11 @@ import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createDatabaseClient, type DatabaseClient } from "./client";
 import { checkDatabaseHealth } from "./health";
+import { assertDedicatedTestDatabase } from "./test-database";
 
 const packageDirectory = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 config({ path: resolve(packageDirectory, "../../.env"), quiet: true });
-const testDatabaseUrl = process.env.DATABASE_TEST_URL;
-
-if (!testDatabaseUrl) {
-  throw new Error(
-    "DATABASE_TEST_URL is required for integration tests. Set it to a dedicated test database URL.",
-  );
-}
+const testDatabaseUrl = assertDedicatedTestDatabase(process.env);
 
 describe("PostgreSQL integration", () => {
   let client: DatabaseClient;
