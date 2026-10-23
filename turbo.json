@@ -1,5 +1,17 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalEnv": [
+    "DATABASE_URL",
+    "DATABASE_TEST_URL",
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_URL",
+    "EMAIL_DELIVERY_MODE",
+    "SMTP_HOST",
+    "SMTP_PORT",
+    "SMTP_USER",
+    "SMTP_PASSWORD",
+    "SMTP_FROM"
+  ],
   "tasks": {
     "dev": { "cache": false, "persistent": true },
     "build": {

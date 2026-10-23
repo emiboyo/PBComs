@@ -4,6 +4,7 @@ node_modules/
 dist/
 coverage/
 *.log
+.auth-emails/
 *.tsbuildinfo
 .env*
 !.env.example

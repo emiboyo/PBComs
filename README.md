@@ -52,3 +52,5 @@ Run `pnpm format` to apply Prettier formatting. Run `pnpm --filter @pbcoms/worke
 `apps/web` is the Next.js App Router application. `apps/worker` is a background-process placeholder. `packages/ui` contains reusable UI primitives, `packages/shared` contains framework-independent utilities, `packages/database` owns server-side PostgreSQL infrastructure, and `packages/config` holds shared TypeScript settings. Apps may import packages; packages must not import apps.
 
 See [docs/README.md](docs/README.md) for the current architecture boundary.
+
+Authentication setup, flows, email previews, and security decisions are documented in [docs/authentication.md](docs/authentication.md).
