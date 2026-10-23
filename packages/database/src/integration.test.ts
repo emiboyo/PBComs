@@ -8,13 +8,18 @@ import { checkDatabaseHealth } from "./health";
 const packageDirectory = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 config({ path: resolve(packageDirectory, "../../.env"), quiet: true });
 const testDatabaseUrl = process.env.DATABASE_TEST_URL;
-const describeIntegration = testDatabaseUrl ? describe : describe.skip;
 
-describeIntegration("PostgreSQL integration", () => {
+if (!testDatabaseUrl) {
+  throw new Error(
+    "DATABASE_TEST_URL is required for integration tests. Set it to a dedicated test database URL.",
+  );
+}
+
+describe("PostgreSQL integration", () => {
   let client: DatabaseClient;
 
   beforeAll(() => {
-    client = createDatabaseClient({ DATABASE_URL: testDatabaseUrl! });
+    client = createDatabaseClient({ DATABASE_URL: testDatabaseUrl });
   });
 
   afterAll(async () => {
