@@ -47,3 +47,25 @@ describe("organisation request Origin validation", () => {
     );
   });
 });
+
+describe("business-profile mutation CSRF validation", () => {
+  const applicationUrl = "https://app.pbcoms.test";
+
+  it("accepts only the configured application origin", () => {
+    expect(
+      hasTrustedRequestOrigin(
+        requestWithOrigin(applicationUrl),
+        applicationUrl,
+      ),
+    ).toBe(true);
+    expect(
+      hasTrustedRequestOrigin(
+        requestWithOrigin("https://attacker.example"),
+        applicationUrl,
+      ),
+    ).toBe(false);
+    expect(hasTrustedRequestOrigin(requestWithOrigin(), applicationUrl)).toBe(
+      false,
+    );
+  });
+});

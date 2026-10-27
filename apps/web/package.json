@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --exclude src/lib/organisation.integration.test.ts",
-    "test:integration": "vitest run src/lib/organisation.integration.test.ts"
+    "test": "vitest run --exclude 'src/lib/*.integration.test.ts'",
+    "test:integration": "vitest run --no-file-parallelism src/lib/organisation.integration.test.ts src/lib/business-profile.integration.test.ts"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.7.12",
