@@ -26,7 +26,7 @@ export async function insertOrganisationWithOwner(input: {
       })
       .returning();
     if (!membership) throw new Error("Membership insert returned no record");
-    return { ...created, role: membership.role };
+    return { ...created, role: membership.role, tradingName: null };
   });
 }
 
@@ -36,6 +36,7 @@ const summarySelection = {
   slug: schema.organisation.slug,
   status: schema.organisation.status,
   role: schema.organisationMembership.role,
+  tradingName: schema.businessProfile.tradingName,
   createdAt: schema.organisation.createdAt,
 };
 
@@ -47,8 +48,16 @@ export function selectOrganisationsForUser(userId: string) {
       schema.organisation,
       eq(schema.organisationMembership.organisationId, schema.organisation.id),
     )
+    .leftJoin(
+      schema.businessProfile,
+      eq(schema.businessProfile.organisationId, schema.organisation.id),
+    )
     .where(eq(schema.organisationMembership.userId, userId))
-    .orderBy(asc(schema.organisation.name), asc(schema.organisation.id));
+    .orderBy(
+      asc(schema.organisation.status),
+      asc(schema.organisation.name),
+      asc(schema.organisation.id),
+    );
 }
 
 export async function selectOrganisationForMember(
@@ -61,6 +70,10 @@ export async function selectOrganisationForMember(
     .innerJoin(
       schema.organisation,
       eq(schema.organisationMembership.organisationId, schema.organisation.id),
+    )
+    .leftJoin(
+      schema.businessProfile,
+      eq(schema.businessProfile.organisationId, schema.organisation.id),
     )
     .where(
       and(

@@ -82,6 +82,91 @@ describe("organisation integration", () => {
     expect(await service.getOrganisationsForUser(owner)).toHaveLength(2);
   });
 
+  it("orders memberships consistently and includes optional trading names", async () => {
+    const second = await service.createOrganisation(owner, {
+      name: "Zulu Registered",
+    });
+    const first = await service.createOrganisation(owner, {
+      name: "Alpha Registered",
+    });
+    if (!first.ok || !second.ok)
+      throw new Error("Expected creation to succeed");
+    await database.databaseClient.db.insert(schema.businessProfile).values({
+      organisationId: second.organisation.id,
+      tradingName: "Zulu Trading",
+    });
+    expect(await service.getOrganisationsForUser(owner)).toMatchObject([
+      { name: "Alpha Registered", tradingName: null, status: "active" },
+      {
+        name: "Zulu Registered",
+        tradingName: "Zulu Trading",
+        status: "active",
+      },
+    ]);
+  });
+
+  it("shows but does not activate suspended and archived memberships", async () => {
+    const active = await service.createOrganisation(owner, { name: "Active" });
+    const archived = await service.createOrganisation(owner, {
+      name: "Archived",
+    });
+    const suspended = await service.createOrganisation(owner, {
+      name: "Suspended",
+    });
+    if (!active.ok || !archived.ok || !suspended.ok)
+      throw new Error("Expected creation to succeed");
+    const { eq } = await import("drizzle-orm");
+    await database.databaseClient.db
+      .update(schema.organisation)
+      .set({ status: "archived" })
+      .where(eq(schema.organisation.id, archived.organisation.id));
+    await database.databaseClient.db
+      .update(schema.organisation)
+      .set({ status: "suspended" })
+      .where(eq(schema.organisation.id, suspended.organisation.id));
+    expect(
+      (await service.getOrganisationsForUser(owner)).map((item) => item.status),
+    ).toEqual(["active", "archived", "suspended"]);
+    await expect(
+      service.requireOrganisationMembership(owner, archived.organisation.id),
+    ).rejects.toMatchObject({ code: "not_found" });
+    await expect(
+      service.requireOrganisationMembership(owner, suspended.organisation.id),
+    ).rejects.toMatchObject({ code: "not_found" });
+  });
+
+  it("removes stale access immediately when membership is removed", async () => {
+    const result = await service.createOrganisation(owner, {
+      name: "Removed Membership",
+    });
+    if (!result.ok) throw new Error("Expected creation to succeed");
+    const { and, eq } = await import("drizzle-orm");
+    await database.databaseClient.db
+      .delete(schema.organisationMembership)
+      .where(
+        and(
+          eq(
+            schema.organisationMembership.organisationId,
+            result.organisation.id,
+          ),
+          eq(schema.organisationMembership.userId, owner.id),
+        ),
+      );
+    expect(await service.getOrganisationsForUser(owner)).toEqual([]);
+    await expect(
+      service.requireOrganisationMembership(owner, result.organisation.id),
+    ).rejects.toMatchObject({ code: "not_found" });
+  });
+
+  it("rejects unauthenticated listing and invalid organisation IDs", async () => {
+    await expect(service.getOrganisationsForUser(null)).rejects.toMatchObject({
+      code: "unauthenticated",
+    });
+    await expect(
+      service.requireOrganisationMembership(owner, "not-a-uuid"),
+    ).rejects.toMatchObject({ code: "not_found" });
+  });
+
   it("returns a typed conflict for a duplicate preferred slug", async () => {
     await service.createOrganisation(owner, {
       name: "First",

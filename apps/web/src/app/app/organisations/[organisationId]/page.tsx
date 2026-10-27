@@ -8,6 +8,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getBusinessProfile } from "@/lib/business-profile-service";
 import { Button } from "@pbcoms/ui";
+import { OrganisationSwitcher } from "@/components/organisation-switcher";
+import { getOrganisationsForUser } from "@/lib/organisation-service";
 
 export default async function OrganisationPage({
   params,
@@ -24,9 +26,14 @@ export default async function OrganisationPage({
       (await params).organisationId,
     );
     const business = await getBusinessProfile(user, organisation.id);
+    const organisations = await getOrganisationsForUser(user);
     const onboardingComplete = business.status === "completed";
     return (
       <main className="min-h-screen bg-slate-50 p-6 text-slate-950">
+        <OrganisationSwitcher
+          organisations={organisations}
+          activeOrganisationId={organisation.id}
+        />
         <Card className="mx-auto mt-12 max-w-2xl bg-white">
           <Link
             href="/app/dashboard"
