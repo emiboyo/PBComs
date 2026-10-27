@@ -6,13 +6,15 @@ import {
 import { Card } from "@pbcoms/ui";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { getBusinessProfile } from "@/lib/business-profile-service";
+import { Button } from "@pbcoms/ui";
 
 export default async function OrganisationPage({
   params,
   searchParams,
 }: {
   params: Promise<{ organisationId: string }>;
-  searchParams: Promise<{ created?: string }>;
+  searchParams: Promise<{ created?: string; onboarding?: string }>;
 }) {
   const user = await getAuthenticatedUser();
   if (!user) redirect("/login");
@@ -21,6 +23,8 @@ export default async function OrganisationPage({
       user,
       (await params).organisationId,
     );
+    const business = await getBusinessProfile(user, organisation.id);
+    const onboardingComplete = business.status === "completed";
     return (
       <main className="min-h-screen bg-slate-50 p-6 text-slate-950">
         <Card className="mx-auto mt-12 max-w-2xl bg-white">
@@ -36,6 +40,14 @@ export default async function OrganisationPage({
               className="mt-5 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800"
             >
               Organisation created successfully.
+            </p>
+          )}
+          {(await searchParams).onboarding === "complete" && (
+            <p
+              role="status"
+              className="mt-5 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800"
+            >
+              Business onboarding completed successfully.
             </p>
           )}
           <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-slate-500">
@@ -60,6 +72,29 @@ export default async function OrganisationPage({
               <dd>{organisation.createdAt.toLocaleDateString("en-GB")}</dd>
             </div>
           </dl>
+          <div className="mt-8 rounded-lg border border-slate-200 p-5">
+            <p className="text-sm font-medium text-slate-500">
+              Business onboarding
+            </p>
+            <p className="mt-1 text-lg font-semibold capitalize">
+              {business.status.replace("_", " ")}
+            </p>
+            <p className="mt-2 text-sm text-slate-600">
+              Profile completion is separate from business verification.
+            </p>
+            <Link
+              className="mt-4 inline-block"
+              href={`/app/organisations/${organisation.id}/onboarding`}
+            >
+              <Button>
+                {onboardingComplete
+                  ? "View or edit business profile"
+                  : business.status === "not_started"
+                    ? "Start onboarding"
+                    : "Continue onboarding"}
+              </Button>
+            </Link>
+          </div>
         </Card>
       </main>
     );
