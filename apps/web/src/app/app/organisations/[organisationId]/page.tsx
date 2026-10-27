@@ -89,19 +89,33 @@ export default async function OrganisationPage({
             <p className="mt-2 text-sm text-slate-600">
               Profile completion is separate from business verification.
             </p>
-            <Link
-              className="mt-4 inline-block"
-              href={`/app/organisations/${organisation.id}/onboarding`}
-            >
-              <Button>
-                {onboardingComplete
-                  ? "View or edit business profile"
-                  : business.status === "not_started"
-                    ? "Start onboarding"
-                    : "Continue onboarding"}
-              </Button>
-            </Link>
+            {organisation.role === "owner" ? (
+              <Link
+                className="mt-4 inline-block"
+                href={`/app/organisations/${organisation.id}/onboarding`}
+              >
+                <Button>
+                  {onboardingComplete
+                    ? "View or edit business profile"
+                    : business.status === "not_started"
+                      ? "Start onboarding"
+                      : "Continue onboarding"}
+                </Button>
+              </Link>
+            ) : (
+              <p className="mt-4 text-sm text-slate-600">
+                Business onboarding can be changed only by an owner.
+              </p>
+            )}
           </div>
+          {organisation.role === "owner" && (
+            <Link
+              className="mt-6 inline-block font-medium text-blue-700"
+              href={`/app/organisations/${organisation.id}/invitations`}
+            >
+              Manage member invitations
+            </Link>
+          )}
         </Card>
       </main>
     );
