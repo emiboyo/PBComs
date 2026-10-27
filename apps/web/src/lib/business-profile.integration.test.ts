@@ -26,6 +26,7 @@ describe("business profile integration", () => {
   let database: typeof import("./database");
   let schema: typeof import("@pbcoms/database").schema;
   let organisationId: string;
+  let otherOrganisationId: string;
   beforeAll(async () => {
     profile = await import("./business-profile-service");
     organisation = await import("./organisation-service");
@@ -61,6 +62,11 @@ describe("business profile integration", () => {
     });
     if (!created.ok) throw new Error("setup failed");
     organisationId = created.organisation.id;
+    const otherCreated = await organisation.createOrganisation(other, {
+      name: "Other Trading",
+    });
+    if (!otherCreated.ok) throw new Error("other setup failed");
+    otherOrganisationId = otherCreated.organisation.id;
   });
   afterAll(async () => database.databaseClient.close());
 
@@ -80,6 +86,57 @@ describe("business profile integration", () => {
     expect(resumed.status).toBe("in_progress");
     expect(resumed.profile?.tradingName).toBe("Draft");
     expect(resumed.profile?.currentStep).toBe("2");
+  });
+  it("preserves omitted profile fields and activities across partial updates", async () => {
+    await profile.saveBusinessProfileDraft(owner, organisationId, {
+      tradingName: "Saved name",
+      legalName: "Saved Legal Limited",
+      website: "https://example.com",
+      city: "Lagos",
+      activities: ["retail", "wholesale"],
+      currentStep: 3,
+    });
+    await profile.saveBusinessProfileDraft(owner, organisationId, {
+      tradingName: "Updated name",
+      website: "",
+    });
+    const updated = await profile.getBusinessProfile(owner, organisationId);
+    expect(updated.profile).toMatchObject({
+      tradingName: "Updated name",
+      legalName: "Saved Legal Limited",
+      website: null,
+      city: "Lagos",
+      currentStep: "3",
+    });
+    expect(updated.activities.map((item) => item.code)).toEqual([
+      "retail",
+      "wholesale",
+    ]);
+  });
+  it("rejects invalid countries and duplicate activities without changing the draft", async () => {
+    await profile.saveBusinessProfileDraft(owner, organisationId, {
+      tradingName: "Original",
+      registrationCountry: "NG",
+      activities: ["retail"],
+    });
+    const invalidCountry = await profile.saveBusinessProfileDraft(
+      owner,
+      organisationId,
+      { registrationCountry: "ZZ" },
+    );
+    const duplicates = await profile.saveBusinessProfileDraft(
+      owner,
+      organisationId,
+      { activities: ["retail", "retail"] },
+    );
+    expect(invalidCountry.ok).toBe(false);
+    expect(duplicates.ok).toBe(false);
+    const unchanged = await profile.getBusinessProfile(owner, organisationId);
+    expect(unchanged.profile).toMatchObject({
+      tradingName: "Original",
+      registrationCountry: "NG",
+    });
+    expect(unchanged.activities.map((item) => item.code)).toEqual(["retail"]);
   });
   it("completes multiple activities and preserves completion history", async () => {
     expect(
@@ -105,6 +162,21 @@ describe("business profile integration", () => {
     const updated = await profile.getBusinessProfile(owner, organisationId);
     expect(updated.profile?.completedAt).toEqual(first.profile?.completedAt);
     expect(updated.activities.map((item) => item.code)).toEqual(["logistics"]);
+    await profile.saveBusinessProfileDraft(owner, organisationId, {
+      businessPhone: "+234 800 000 0000",
+    });
+    const partiallyEdited = await profile.getBusinessProfile(
+      owner,
+      organisationId,
+    );
+    expect(partiallyEdited.status).toBe("completed");
+    expect(partiallyEdited.profile?.completedAt).toEqual(
+      first.profile?.completedAt,
+    );
+    expect(partiallyEdited.profile?.tradingName).toBe("Updated");
+    expect(partiallyEdited.activities.map((item) => item.code)).toEqual([
+      "logistics",
+    ]);
   });
   it("enforces final fields, verification, and tenant isolation", async () => {
     expect(
@@ -123,6 +195,14 @@ describe("business profile integration", () => {
       profile.getBusinessProfile(other, organisationId),
     ).rejects.toMatchObject({ code: "not_found" });
     await expect(
+      profile.saveBusinessProfileDraft(owner, otherOrganisationId, {
+        tradingName: "Cross tenant write",
+      }),
+    ).rejects.toMatchObject({ code: "not_found" });
+    await expect(
+      profile.getBusinessProfile(owner, otherOrganisationId),
+    ).rejects.toMatchObject({ code: "not_found" });
+    await expect(
       profile.saveBusinessProfileDraft(unverified, organisationId, {
         tradingName: "No",
       }),
@@ -132,6 +212,16 @@ describe("business profile integration", () => {
         tradingName: "No",
       }),
     ).rejects.toMatchObject({ code: "unauthenticated" });
+  });
+  it("enforces database uniqueness for duplicate activity selections", async () => {
+    await expect(
+      database.databaseClient.db
+        .insert(schema.organisationBusinessActivity)
+        .values([
+          { organisationId, activityCode: "retail" },
+          { organisationId, activityCode: "retail" },
+        ]),
+    ).rejects.toMatchObject({ cause: { code: "23505" } });
   });
   it("rolls back a failed multi-table transaction", async () => {
     await expect(

@@ -4,9 +4,9 @@ Each organisation owns at most one private `business_profile`. No row means `not
 
 Activities use a controlled `business_activity_type` catalogue and the composite-key `organisation_business_activity` join table. This supports multiple simultaneous roles and future catalogue additions through migrations without creating extra organisations.
 
-Owners can save partial drafts through the four-step onboarding route. Final completion requires a trading name, structure, two-letter ISO country codes, description, email, operating address, and at least one activity. Legal name, registration number, telephone, website, second address line, region, and postal code remain optional for international compatibility.
+Owners can save partial drafts through the four-step onboarding route. Omitted fields and activity selections retain their saved values; an explicitly empty optional field clears that field. Final completion requires a trading name, structure, countries from the controlled ISO 3166-1 alpha-2 catalogue, description, email, operating address, and at least one unique activity. Legal name, registration number, telephone, website, second address line, region, and postal code remain optional for international compatibility.
 
-All reads first require organisation membership; all mutations require the authenticated, email-verified owner. The server derives identity from the Better Auth session, scopes queries by organisation, checks request origin for mutations, accepts only Zod-allowlisted fields, and updates the profile and activities transactionally. Profiles have no public endpoint.
+All reads first require organisation membership; all mutations require the authenticated, email-verified owner. The server derives identity from the Better Auth session, scopes queries by organisation, checks request origin for mutations, accepts only Zod-allowlisted fields, and updates the profile and any explicitly supplied activity replacement transactionally. Profiles have no public endpoint.
 
 Migration `0002_fair_menace.sql` creates the profile, catalogue, and join tables and seeds the initial controlled activities. Existing organisations need no repair and enter onboarding as `not_started`.
 

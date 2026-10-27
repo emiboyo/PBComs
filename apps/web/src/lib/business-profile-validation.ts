@@ -1,30 +1,26 @@
 import { schema } from "@pbcoms/database";
 import { z } from "zod";
+import { isoCountryCodeSet } from "./iso-country-codes";
 
 const optionalText = (max: number) =>
   z
     .string()
     .trim()
     .max(max)
-    .optional()
+    .transform((value) => (value === "" ? null : value))
     .nullable()
-    .transform((value) => value || null);
+    .optional();
 export const countryCodeSchema = z
   .string()
   .trim()
   .toUpperCase()
-  .regex(/^[A-Z]{2}$/, "Use a two-letter ISO country code.");
-const optionalCountry = z
-  .string()
-  .trim()
-  .toUpperCase()
   .refine(
-    (value) => value === "" || /^[A-Z]{2}$/.test(value),
-    "Use a two-letter ISO country code.",
-  )
-  .optional()
-  .nullable()
-  .transform((value) => value || null);
+    (value) => isoCountryCodeSet.has(value),
+    "Use a valid ISO 3166-1 alpha-2 country code.",
+  );
+const optionalCountry = z
+  .union([countryCodeSchema, z.literal("").transform(() => null), z.null()])
+  .optional();
 const optionalEmail = z
   .string()
   .trim()
@@ -33,9 +29,9 @@ const optionalEmail = z
     "Enter a valid email address.",
   )
   .max(254)
-  .optional()
+  .transform((value) => (value === "" ? null : value))
   .nullable()
-  .transform((value) => value || null);
+  .optional();
 const optionalWebsite = z
   .string()
   .trim()
@@ -44,12 +40,19 @@ const optionalWebsite = z
     "Enter a complete website URL.",
   )
   .max(2048)
-  .optional()
+  .transform((value) => (value === "" ? null : value))
   .nullable()
-  .transform((value) => value || null);
+  .optional();
 
 const { activityCodes, businessStructures } = schema;
 export const activityCodeSchema = z.enum(activityCodes);
+const activitiesSchema = z
+  .array(activityCodeSchema)
+  .max(activityCodes.length)
+  .refine(
+    (activities) => new Set(activities).size === activities.length,
+    "Select each business activity only once.",
+  );
 export const draftBusinessProfileSchema = z
   .object({
     tradingName: optionalText(120),
@@ -67,10 +70,7 @@ export const draftBusinessProfileSchema = z
     city: optionalText(120),
     region: optionalText(120),
     postalCode: optionalText(30),
-    activities: z
-      .array(activityCodeSchema)
-      .max(activityCodes.length)
-      .optional(),
+    activities: activitiesSchema.optional(),
     currentStep: z.coerce.number().int().min(1).max(4).optional(),
   })
   .strict();
@@ -84,7 +84,7 @@ export const completeBusinessProfileSchema = draftBusinessProfileSchema.extend({
   operatingCountry: countryCodeSchema,
   addressLine1: z.string().trim().min(2).max(200),
   city: z.string().trim().min(1).max(120),
-  activities: z.array(activityCodeSchema).min(1),
+  activities: activitiesSchema.min(1),
 });
 
 export type DraftBusinessProfileInput = z.input<

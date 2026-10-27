@@ -56,18 +56,15 @@ export async function saveBusinessProfileDraft(
     };
   const { activities, currentStep, ...fields } = parsed.data;
   const existing = await selectBusinessProfile(organisationId);
-  await upsertBusinessProfile(
-    organisationId,
-    {
-      ...fields,
-      currentStep: String(currentStep ?? 1),
-      onboardingStatus:
-        existing.profile?.onboardingStatus === "completed"
-          ? "completed"
-          : "in_progress",
-    },
-    activities,
-  );
+  const draftValues = {
+    ...fields,
+    ...(currentStep === undefined ? {} : { currentStep: String(currentStep) }),
+    onboardingStatus:
+      existing.profile?.onboardingStatus === "completed"
+        ? "completed"
+        : "in_progress",
+  };
+  await upsertBusinessProfile(organisationId, draftValues, activities);
   return { ok: true, profile: await selectBusinessProfile(organisationId) };
 }
 
