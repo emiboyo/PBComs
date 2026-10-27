@@ -1,8 +1,12 @@
 import { getAuthenticatedUser } from "@/lib/authenticated-user";
 import { getBusinessProfile } from "@/lib/business-profile-service";
 import { BusinessOnboardingForm } from "@/components/business-onboarding-form";
-import { OrganisationAccessError } from "@/lib/organisation-service";
+import {
+  getOrganisationsForUser,
+  OrganisationAccessError,
+} from "@/lib/organisation-service";
 import { notFound, redirect } from "next/navigation";
+import { OrganisationSwitcher } from "@/components/organisation-switcher";
 
 export default async function OnboardingPage({
   params,
@@ -20,8 +24,13 @@ export default async function OnboardingPage({
       ...(profile ?? { tradingName: organisation.name, currentStep: "1" }),
       activities: activities.map((activity) => activity.code),
     };
+    const organisations = await getOrganisationsForUser(user);
     return (
       <main className="min-h-screen bg-slate-50 p-6 text-slate-950">
+        <OrganisationSwitcher
+          organisations={organisations}
+          activeOrganisationId={organisation.id}
+        />
         <BusinessOnboardingForm
           organisationId={organisation.id}
           initial={initial}

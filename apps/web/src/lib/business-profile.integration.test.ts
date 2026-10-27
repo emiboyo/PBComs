@@ -113,6 +113,39 @@ describe("business profile integration", () => {
       "wholesale",
     ]);
   });
+  it("switches between accessible organisations without leaking profile data", async () => {
+    const second = await organisation.createOrganisation(owner, {
+      name: "Second Owner Organisation",
+    });
+    if (!second.ok) throw new Error("second owner setup failed");
+    await profile.saveBusinessProfileDraft(owner, organisationId, {
+      tradingName: "First Tenant Trading",
+      activities: ["retail"],
+    });
+    await profile.saveBusinessProfileDraft(owner, second.organisation.id, {
+      tradingName: "Second Tenant Trading",
+      activities: ["logistics"],
+    });
+    const firstProfile = await profile.getBusinessProfile(
+      owner,
+      organisationId,
+    );
+    const secondProfile = await profile.getBusinessProfile(
+      owner,
+      second.organisation.id,
+    );
+    expect(firstProfile.profile?.tradingName).toBe("First Tenant Trading");
+    expect(firstProfile.activities.map((item) => item.code)).toEqual([
+      "retail",
+    ]);
+    expect(secondProfile.profile?.tradingName).toBe("Second Tenant Trading");
+    expect(secondProfile.activities.map((item) => item.code)).toEqual([
+      "logistics",
+    ]);
+    expect(secondProfile.profile?.tradingName).not.toBe(
+      firstProfile.profile?.tradingName,
+    );
+  });
   it("rejects invalid countries and duplicate activities without changing the draft", async () => {
     await profile.saveBusinessProfileDraft(owner, organisationId, {
       tradingName: "Original",

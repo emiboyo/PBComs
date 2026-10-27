@@ -17,6 +17,7 @@ export type OrganisationSummary = {
   slug: string;
   status: "active" | "suspended" | "archived";
   role: "owner";
+  tradingName: string | null;
   createdAt: Date;
 };
 
@@ -27,6 +28,9 @@ export class OrganisationAccessError extends Error {
     super(code);
   }
 }
+
+const organisationIdPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export type CreateOrganisationResult =
   | { ok: true; organisation: OrganisationSummary }
@@ -101,13 +105,28 @@ export async function getOrganisationsForUser(
   return selectOrganisationsForUser(actor.id);
 }
 
+export function selectActiveOrganisation(
+  organisations: OrganisationSummary[],
+  organisationId: string,
+) {
+  const selected = organisations.find(
+    (organisation) => organisation.id === organisationId,
+  );
+  if (!selected || selected.status !== "active")
+    throw new OrganisationAccessError("not_found");
+  return selected;
+}
+
 export async function requireOrganisationMembership(
   actor: OrganisationActor | null,
   organisationId: string,
 ) {
   if (!actor) throw new OrganisationAccessError("unauthenticated");
+  if (!organisationIdPattern.test(organisationId))
+    throw new OrganisationAccessError("not_found");
   const result = await selectOrganisationForMember(actor.id, organisationId);
-  if (!result) throw new OrganisationAccessError("not_found");
+  if (!result || result.status !== "active")
+    throw new OrganisationAccessError("not_found");
   return result;
 }
 
