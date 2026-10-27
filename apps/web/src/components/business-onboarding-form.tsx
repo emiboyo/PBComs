@@ -82,32 +82,41 @@ export function BusinessOnboardingForm({
     setBusy(true);
     setMessage("");
     setErrors({});
-    const response = await fetch(
-      `/api/organisations/${organisationId}/business-profile`,
-      {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...form, currentStep: step, complete }),
-      },
-    );
-    const result = await response.json();
-    setBusy(false);
-    if (!result.ok) {
-      setErrors(result.fieldErrors ?? {});
-      setMessage(
-        result.code === "invalid_input"
-          ? "Please correct the highlighted information."
-          : "We could not save your profile.",
+    try {
+      const response = await fetch(
+        `/api/organisations/${organisationId}/business-profile`,
+        {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ ...form, currentStep: step, complete }),
+        },
       );
-      return;
+      const result = (await response.json()) as {
+        ok?: boolean;
+        code?: string;
+        fieldErrors?: Record<string, string[]>;
+      };
+      if (!response.ok || !result.ok) {
+        setErrors(result.fieldErrors ?? {});
+        setMessage(
+          result.code === "invalid_input"
+            ? "Please correct the highlighted information."
+            : "We could not save your profile.",
+        );
+        return;
+      }
+      if (complete) {
+        router.push(`/app/organisations/${organisationId}?onboarding=complete`);
+        router.refresh();
+        return;
+      }
+      setMessage("Draft saved.");
+      if (step < 4) setStep(step + 1);
+    } catch {
+      setMessage("We could not save your profile. Please try again.");
+    } finally {
+      setBusy(false);
     }
-    if (complete) {
-      router.push(`/app/organisations/${organisationId}?onboarding=complete`);
-      router.refresh();
-      return;
-    }
-    setMessage("Draft saved.");
-    if (step < 4) setStep(step + 1);
   }
   const field = (
     name: Exclude<keyof State, "activities">,
@@ -152,6 +161,7 @@ export function BusinessOnboardingForm({
                 className="rounded-md border border-slate-300 p-3"
                 value={form.businessStructure}
                 onChange={(e) => update("businessStructure", e.target.value)}
+                aria-invalid={!!errors.businessStructure}
               >
                 <option value="">Select structure</option>
                 {structures.map(([value, label]) => (
@@ -178,6 +188,7 @@ export function BusinessOnboardingForm({
                 className="min-h-32 rounded-md border border-slate-300 p-3"
                 value={form.description}
                 onChange={(e) => update("description", e.target.value)}
+                aria-invalid={!!errors.description}
               />
               {errors.description && (
                 <span className="text-red-700">{errors.description[0]}</span>
