@@ -1,3 +1,4 @@
+import { canViewOrganisationRoster } from "@pbcoms/shared";
 import { getAuthenticatedUser } from "@/lib/authenticated-user";
 import {
   OrganisationAccessError,
@@ -108,6 +109,14 @@ export default async function OrganisationPage({
               </p>
             )}
           </div>
+          {canViewOrganisationRoster(organisation.role) && (
+            <Link
+              className="mt-6 mr-6 inline-block font-medium text-blue-700"
+              href={`/app/organisations/${organisation.id}/members`}
+            >
+              View organisation members
+            </Link>
+          )}
           {organisation.role === "owner" && (
             <Link
               className="mt-6 inline-block font-medium text-blue-700"

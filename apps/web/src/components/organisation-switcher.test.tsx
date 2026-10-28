@@ -56,3 +56,43 @@ describe("OrganisationSwitcher", () => {
     expect(html).toContain("/app/organisations/new");
   });
 });
+
+it("shows each organisation's own role without carrying the active role across tenants", () => {
+  const html = renderToStaticMarkup(
+    <OrganisationSwitcher
+      organisations={[
+        {
+          id: "a",
+          name: "Owner company",
+          slug: "a",
+          status: "active",
+          role: "owner",
+          tradingName: null,
+          createdAt: new Date(),
+        },
+        {
+          id: "b",
+          name: "Manager company",
+          slug: "b",
+          status: "active",
+          role: "manager",
+          tradingName: null,
+          createdAt: new Date(),
+        },
+        {
+          id: "c",
+          name: "Viewer company",
+          slug: "c",
+          status: "active",
+          role: "viewer",
+          tradingName: null,
+          createdAt: new Date(),
+        },
+      ]}
+      activeOrganisationId="a"
+    />,
+  );
+  expect(html).toMatch(/Owner company[\s\S]*Owner/);
+  expect(html).toMatch(/Manager company[\s\S]*Manager/);
+  expect(html).toMatch(/Viewer company[\s\S]*Viewer/);
+});

@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --exclude 'src/lib/*.integration.test.ts'",
-    "test:integration": "vitest run --no-file-parallelism src/lib/organisation.integration.test.ts src/lib/business-profile.integration.test.ts src/lib/invitation.integration.test.ts"
+    "test:integration": "vitest run --no-file-parallelism src/lib/organisation.integration.test.ts src/lib/business-profile.integration.test.ts src/lib/invitation.integration.test.ts src/lib/membership.integration.test.ts"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.7.12",
@@ -22,7 +22,8 @@
     "nodemailer": "^10.2.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "zod": "^4.0.0"
+    "zod": "^4.0.0",
+    "@pbcoms/shared": "workspace:*"
   },
   "devDependencies": {
     "@pbcoms/config": "workspace:*",

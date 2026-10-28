@@ -1,3 +1,4 @@
+import { organisationRoleCodes } from "@pbcoms/shared";
 import { relations, sql } from "drizzle-orm";
 import {
   check,
@@ -15,7 +16,7 @@ export const organisationStatuses = [
   "suspended",
   "archived",
 ] as const;
-export const membershipRoles = ["owner", "member"] as const;
+export const membershipRoles = organisationRoleCodes;
 export const organisationRoles = membershipRoles;
 export const invitationStatuses = [
   "pending",
@@ -70,7 +71,12 @@ export const organisationMembership = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "restrict" }),
-    role: text("role", { enum: membershipRoles }).default("owner").notNull(),
+    role: text("role", { enum: membershipRoles }).default("member").notNull(),
+    roleChangedAt: timestamp("role_changed_at", { withTimezone: true }),
+    roleChangedByUserId: text("role_changed_by_user_id").references(
+      () => user.id,
+      { onDelete: "restrict" },
+    ),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -89,7 +95,7 @@ export const organisationMembership = pgTable(
     ),
     check(
       "organisation_membership_role_valid",
-      sql`${table.role} in ('owner', 'member')`,
+      sql`${table.role} in ('owner', 'admin', 'manager', 'staff', 'viewer', 'member')`,
     ),
   ],
 );

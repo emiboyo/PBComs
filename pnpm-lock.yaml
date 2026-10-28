@@ -44,6 +44,9 @@ importers:
       '@pbcoms/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@pbcoms/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@pbcoms/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -110,6 +113,9 @@ importers:
 
   packages/database:
     dependencies:
+      '@pbcoms/shared':
+        specifier: workspace:*
+        version: link:../shared
       dotenv:
         specifier: ^18.0.9
         version: 18.0.9
