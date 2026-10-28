@@ -109,9 +109,15 @@ describe("member invitation integration", () => {
     expect(stored?.expiresAt).toEqual(
       new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
     );
-    expect(
-      await invitations.getOrganisationInvitations(owner, organisationId),
-    ).toHaveLength(1);
+    const management = await invitations.getOrganisationInvitations(
+      owner,
+      organisationId,
+    );
+    expect(management).toHaveLength(1);
+    expect(JSON.stringify(management)).not.toContain(token);
+    expect(JSON.stringify(management)).not.toContain(stored?.tokenHash);
+    expect(management[0]).not.toHaveProperty("token");
+    expect(management[0]).not.toHaveProperty("tokenHash");
   });
 
   it("rejects unauthenticated, unverified, and non-owner invitation creation", async () => {
@@ -194,6 +200,19 @@ describe("member invitation integration", () => {
     await expect(
       invitations.respondToInvitation(unverified, { token, action: "accept" }),
     ).rejects.toMatchObject({ code: "email_unverified" });
+  });
+
+  it("rejects unauthenticated and unknown tokens without echoing them", async () => {
+    const token = "x".repeat(43);
+    await expect(
+      invitations.respondToInvitation(null, { token, action: "accept" }),
+    ).rejects.toMatchObject({ code: "unauthenticated" });
+    const result = await invitations.respondToInvitation(recipient, {
+      token,
+      action: "accept",
+    });
+    expect(result).toEqual({ ok: false, code: "not_found" });
+    expect(JSON.stringify(result)).not.toContain(token);
   });
 
   it("prevents acceptance after expiration, decline, or revocation", async () => {

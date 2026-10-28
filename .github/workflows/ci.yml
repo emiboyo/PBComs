@@ -49,3 +49,17 @@ jobs:
       - run: pnpm test:integration
       - run: pnpm format:check
       - run: pnpm build
+      - name: Verify invitation HTTP security headers
+        env:
+          NODE_ENV: production
+        run: |
+          pnpm --filter @pbcoms/web start > "$RUNNER_TEMP/pb007-http.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent --output /dev/null http://localhost:3000/login; then
+              break
+            fi
+            sleep 1
+          done
+          node --test apps/web/scripts/invitation-security-smoke.mjs

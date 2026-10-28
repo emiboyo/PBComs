@@ -1,7 +1,12 @@
 import { InvitationResponse } from "@/components/invitation-response";
 import { getAuthenticatedUser } from "@/lib/authenticated-user";
 import { Card } from "@pbcoms/ui";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+
+export const dynamic = "force-dynamic";
+// Also update the document policy on App Router client navigation.
+export const metadata: Metadata = { referrer: "no-referrer" };
 
 export default async function InvitationPage({
   params,

@@ -15,6 +15,8 @@ export function InvitationResponse({ token }: { token: string }) {
     try {
       const response = await fetch("/api/invitations/respond", {
         method: "POST",
+        referrerPolicy: "no-referrer",
+        cache: "no-store",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ token, action }),
       });
@@ -32,7 +34,7 @@ export function InvitationResponse({ token }: { token: string }) {
         return;
       }
       if (action === "accept" && result.organisationId) {
-        router.push(`/app/organisations/${result.organisationId}`);
+        router.replace(`/app/organisations/${result.organisationId}`);
         router.refresh();
       } else {
         setMessage("Invitation declined.");

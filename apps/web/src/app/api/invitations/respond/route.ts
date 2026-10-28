@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   if (!hasTrustedRequestOrigin(request, authEnvironment.BETTER_AUTH_URL))
     return NextResponse.json(
       { ok: false, code: "invalid_origin" },
-      { status: 403 },
+      { status: 403, headers: { "Cache-Control": "no-store" } },
     );
   const session = await auth.api.getSession({ headers: await headers() });
   let input: unknown;
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json(
       { ok: false, code: "invalid_input" },
-      { status: 400 },
+      { status: 400, headers: { "Cache-Control": "no-store" } },
     );
   }
   try {
@@ -33,16 +33,22 @@ export async function POST(request: Request) {
         : null,
       input as { token: string; action: "accept" | "decline" },
     );
-    return NextResponse.json(result, { status: result.ok ? 200 : 400 });
+    return NextResponse.json(result, {
+      status: result.ok ? 200 : 400,
+      headers: { "Cache-Control": "no-store" },
+    });
   } catch (error) {
     if (error instanceof OrganisationAccessError)
       return NextResponse.json(
         { ok: false, code: error.code },
-        { status: error.code === "unauthenticated" ? 401 : 403 },
+        {
+          status: error.code === "unauthenticated" ? 401 : 403,
+          headers: { "Cache-Control": "no-store" },
+        },
       );
     return NextResponse.json(
       { ok: false, code: "request_failed" },
-      { status: 500 },
+      { status: 500, headers: { "Cache-Control": "no-store" } },
     );
   }
 }
