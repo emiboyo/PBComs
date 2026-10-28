@@ -10,13 +10,17 @@ import {
   selectOrganisationsForUser,
 } from "./organisation-repository";
 
-export type OrganisationActor = { id: string; emailVerified: boolean };
+export type OrganisationActor = {
+  id: string;
+  emailVerified: boolean;
+  email?: string;
+};
 export type OrganisationSummary = {
   id: string;
   name: string;
   slug: string;
   status: "active" | "suspended" | "archived";
-  role: "owner";
+  role: "owner" | "member";
   tradingName: string | null;
   createdAt: Date;
 };

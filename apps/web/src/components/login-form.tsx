@@ -35,7 +35,7 @@ export function LoginForm() {
       );
       return;
     }
-    router.push(safeRedirect(searchParams.get("next")));
+    router.replace(safeRedirect(searchParams.get("next")));
     router.refresh();
   }
 
