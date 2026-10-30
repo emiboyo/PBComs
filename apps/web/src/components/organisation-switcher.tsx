@@ -1,3 +1,4 @@
+import { organisationRoles } from "@pbcoms/shared";
 import type { OrganisationSummary } from "@/lib/organisation-service";
 import Link from "next/link";
 import React from "react";
@@ -60,6 +61,9 @@ export function OrganisationSwitcher({
                             {organisation.name}
                           </span>
                         )}
+                        <span className="block text-xs text-slate-600">
+                          {organisationRoles[organisation.role].label}
+                        </span>
                         {isActive && (
                           <span className="text-xs font-medium text-blue-700">
                             Current organisation

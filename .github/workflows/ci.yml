@@ -49,7 +49,7 @@ jobs:
       - run: pnpm test:integration
       - run: pnpm format:check
       - run: pnpm build
-      - name: Verify invitation HTTP security headers
+      - name: Verify invitation and role-management HTTP security
         env:
           NODE_ENV: production
         run: |
@@ -63,3 +63,4 @@ jobs:
             sleep 1
           done
           node --test apps/web/scripts/invitation-security-smoke.mjs
+          node --test apps/web/scripts/role-management-smoke.mjs

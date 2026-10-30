@@ -6,4 +6,4 @@ PB-002 adds the framework-independent PostgreSQL and Drizzle foundation in `pack
 
 Future tenant-owned data must be scoped using server-verified organisation context and reinforced with database constraints. See the database package documentation for detailed conventions and the future Row-Level Security trade-off.
 
-See [authentication](./authentication.md), [organisations](./organisations.md), [business onboarding](./business-onboarding.md), the [organisation switcher](./organisation-switcher.md), and [member invitations](./member-invitations.md) for the current application foundations.
+See [authentication](./authentication.md), [organisations](./organisations.md), [business onboarding](./business-onboarding.md), the [organisation switcher](./organisation-switcher.md), [member invitations](./member-invitations.md), and [organisation roles](./organisation-roles.md) for the current application foundations.

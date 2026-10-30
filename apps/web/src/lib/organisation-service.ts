@@ -1,3 +1,4 @@
+import type { OrganisationRole } from "@pbcoms/shared";
 import {
   createOrganisationInputSchema,
   normaliseOrganisationSlug,
@@ -20,7 +21,7 @@ export type OrganisationSummary = {
   name: string;
   slug: string;
   status: "active" | "suspended" | "archived";
-  role: "owner" | "member";
+  role: OrganisationRole;
   tradingName: string | null;
   createdAt: Date;
 };
